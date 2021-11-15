@@ -8,6 +8,7 @@ on:
 jobs:
   build-and-e2etest:
     runs-on: macos-latest
+    timeout-minutes: 20
     env:
       LOG_OUTPUT_PATH: workpub_e2e_actionpub_e2e_action/e2e
     steps:
@@ -16,7 +17,7 @@ jobs:
       - name: Install node package from dependency
         run: |
           cd e2e
-          npm ci
+          npm install
       - name: Check environment by appium-doctor
         run: |
           cd e2e
