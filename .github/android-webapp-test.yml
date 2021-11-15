@@ -1,0 +1,65 @@
+name: android-webapp-testt
+
+on:
+  push:
+    branches: [webtest-app]
+  workflow_dispatch:
+
+jobs:
+  build-and-e2etest:
+    runs-on: macos-latest
+    env:
+      LOG_OUTPUT_PATH: workpub_e2e_actionpub_e2e_action/e2e
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install node package from dependency
+        run: |
+          cd e2e
+          npm ci
+      - name: Check environment by appium-doctor
+        run: |
+          cd e2e
+          npm run doctor
+      - name: Check VM acceleration
+        run: kextstat | grep intel
+
+      - name: Create AVD
+        run: |
+          SYSTEM_IMAGES="system-images;android-30;default;x86"
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "$SYSTEM_IMAGES"
+          echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager --verbose create avd -n test -k "$SYSTEM_IMAGES"
+      - name: Start android emulator
+        # https://developer.android.com/studio/run/emulator-commandline
+        run: |
+          mkdir ~/log
+          $ANDROID_HOME/emulator/emulator -avd test -verbose -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim >> ~/log/emulator.log &
+      - name: Wait for boot
+        run: |
+          while [ "`adb shell getprop sys.boot_completed | tr -d '\r'`" != "1" ] ; do sleep 10 && echo "wait for boot..."; done
+      - name: Disable emulator animation
+        run: |
+          adb shell settings put global window_animation_scale 0.0
+          adb shell settings put global transition_animation_scale 0.0
+          adb shell settings put global animator_duration_scale 0.0
+      - name: Start appium server
+        run: |
+          cd e2e
+          npm run s:appium >> ~/log/appium.log &
+      - name: Execute e2e test
+        run: |
+          sleep 10
+          cd e2e
+          node index.js
+      - name: Stop appium server
+        run: killall node
+
+      - name: Move webdriverio log to ~/log
+        run: mv ~/${{ env.LOG_OUTPUT_PATH }}/wdio.log ~/log
+
+      - name: Archive emulator and appium server logs
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: log
+          path: ~/log

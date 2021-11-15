@@ -6,7 +6,7 @@ const opts = {
   port: 4723,
   capabilities: {
     platformName: "Android",
-    platformVersion: "9",
+    platformVersion: "11",
     deviceName: "emulator-5554",
     browserName: "Chrome",
     automationName: "UiAutomator2"
