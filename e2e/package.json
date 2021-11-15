@@ -6,6 +6,8 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "wdio": "wdio run wdio.conf.ts",
+        "s:appium": "appium",
+        "s:avd": "emulator @Pixel_3_XL_API_28",
         "doctor": "appium-doctor"
     },
     "author": "",
